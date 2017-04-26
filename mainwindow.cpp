@@ -5,6 +5,7 @@
 #include <QtGui>
 #include <QVector>
 #include <QMessageBox>
+#include <QElapsedTimer>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -15,13 +16,16 @@ MainWindow::MainWindow(QWidget *parent) :
 	arr = NULL;
 	moves_number = 0;
 	moves_info = new QLabel(ui->statusBar);
-	ui->statusBar->addWidget(moves_info);
+	time_label = new QLabel(ui->statusBar);
 
-	Generate_Tiles();
+	moves_info->setText("Число ходов: 0");
+	ui->statusBar->insertWidget(0,moves_info,50);
+	ui->statusBar->insertWidget(1,time_label);
 
+	Generate_Tiles(false);
 }
 
-void MainWindow::Generate_Tiles() // функция для рандомного создания плиток
+void MainWindow::Generate_Tiles(bool random) // функция для рандомного создания плиток
 {
 	int z = 0;
 	if (arr != NULL) //если массив уже инициализирован
@@ -70,10 +74,17 @@ void MainWindow::Generate_Tiles() // функция для рандомного 
 			QPushButton *label = new QPushButton(this); // создаем плитку
 
 			pal.setColor(QPalette::ButtonText, Qt::white);
-			label->setText(QString::number(vec[z]+1)); // текст, который будет на ней отображаться - число из вектора
+			if (random == true)
+			{
+				label->setText(QString::number(vec[z]+1)); // текст, который будет на ней отображаться - число из вектора
+			}
+			else
+			{
+				label->setText(QString::number(z+1)); // текст, который будет на ней отображаться - число из вектора
+			}
 			label->setFont(QFont("Consolas",50, QFont::Bold)); // делаем побольше шрифт
 			label->setPalette(pal);
-			label->setMinimumSize(100,100);
+			label->setMinimumSize(80,80);
 			label->setStyleSheet("background-color:blue; border:5px solid white;"); // делаем её зеленой
 
 			connect(label, SIGNAL(pressed()), this, SLOT(processButton()));
@@ -191,34 +202,38 @@ void MainWindow::MoveCell(QPushButton *w, int arr_i, int arr_j) // передв�
 
 void MainWindow::processButton() // по нажатию плитки выполняется эта функция
 {
-	QPushButton *obj = qobject_cast<QPushButton*>(sender());
-	qDebug() << obj->text();
-
-	int i = 0, j = 0;
-
-	// ищем индекс (на каком столбце и строке стоит плитка в матрице)
-
-	for (i = 0; i < 4; i++)
+	if (can_move)
 	{
-		for (j = 0; j < 4; j++)
+		QPushButton *obj = qobject_cast<QPushButton*>(sender());
+		qDebug() << obj->text();
+
+		int i = 0, j = 0;
+
+		// ищем индекс (на каком столбце и строке стоит плитка в матрице)
+
+		for (i = 0; i < 4; i++)
 		{
-			if (arr[i][j] == obj) // нашлась плитка
+			for (j = 0; j < 4; j++)
 			{
-				MoveCell(obj,i,j); // двигаем плитки
-				moves_info->setText("Число ходов: " + QString::number(moves_number));
-				if(has_won()) // если плитки расставлены по порядку
+				if (arr[i][j] == obj) // нашлась плитка
 				{
-					QMessageBox msg;
-					msg.setText("Вы выиграли!"); // выводим сообщение о выигрыше
-					msg.setStandardButtons(QMessageBox::Ok);
-					msg.setInformativeText("Число ходов: " + QString::number(moves_number));
-					msg.exec();
+					MoveCell(obj,i,j); // двигаем плитки
+					moves_info->setText("Число ходов: " + QString::number(moves_number));
+					if(has_won()) // если плитки расставлены по порядку
+					{
+						timer_started = false;
+						can_move = false;
+						QMessageBox msg;
+						msg.setText("Вы выиграли!"); // выводим сообщение о выигрыше
+						msg.setStandardButtons(QMessageBox::Ok);
+						msg.setInformativeText("Число ходов: " + QString::number(moves_number) + all_time);
+						msg.exec();
+					}
+					return;
 				}
-				return;
 			}
 		}
 	}
-
 }
 
 int my_rand(int i)
@@ -230,5 +245,43 @@ void MainWindow::on_pushButton_clicked()
 {
 	moves_info->setText("Число ходов: 0");
 	moves_number = 0;
-	Generate_Tiles();
+	Generate_Tiles(true);
+	startTimer(0);
+	mStartTime = QDateTime::currentDateTime();
+	timer_started = true;
+	can_move = true;
+}
+
+void MainWindow::timerEvent(QTimerEvent *)
+{
+	if(timer_started)
+	{
+		qint64 ms = mStartTime.msecsTo(QDateTime::currentDateTime());
+		int h = ms / 1000 / 60 / 60;
+		int m = (ms / 1000 / 60) - (h * 60);
+		int s = (ms / 1000) - (m * 60);
+		if (m < 10)
+		{
+			all_time = '0' + QString::number(m) + ':';
+		}
+		else {
+			all_time = QString::number(m) + ':';
+		}
+
+		if (s < 10)
+		{
+			all_time += '0' + QString::number(s);
+		}
+		else {
+			all_time += QString::number(s);
+		}
+
+		time_label->setText("Время: " + all_time);
+	}
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+	QMainWindow::resizeEvent(event);
+	qDebug() << this->width() << " " << this->height();
 }
