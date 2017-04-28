@@ -6,6 +6,9 @@
 #include <QVector>
 #include <QMessageBox>
 #include <QElapsedTimer>
+#include <QSettings>
+#include <QColor>
+#include "settings.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -27,6 +30,22 @@ MainWindow::MainWindow(QWidget *parent) :
 
 void MainWindow::Generate_Tiles(bool random) // функция для рандомного создания плиток
 {
+	QSettings set("Neridia, Inc.", "Fifteen"); // открываем настройки
+
+	if (!random)
+	{
+		timer_started = false;
+		time_label->setText("Время: 00:00");
+		moves_info->setText("Число ходов: 0");
+	}
+	else
+	{
+		startTimer(0);
+		mStartTime = QDateTime::currentDateTime();
+		timer_started = true;
+		can_move = true;
+	}
+
 	int z = 0;
 	if (arr != NULL) //если массив уже инициализирован
 	{
@@ -80,12 +99,14 @@ void MainWindow::Generate_Tiles(bool random) // функция для рандо
 			}
 			else
 			{
-				label->setText(QString::number(z+1)); // текст, который будет на ней отображаться - число из вектора
+				label->setText(QString::number(z+1)); // текст, который будет на ней отображаться - число
 			}
-			label->setFont(QFont("Consolas",50, QFont::Bold)); // делаем побольше шрифт
+			label->setFont(QFont(set.value("font-family").toString(), set.value("font-size").toInt(), QFont::Bold)); // делаем побольше шрифт
 			label->setPalette(pal);
 			label->setMinimumSize(80,80);
-			label->setStyleSheet("background-color:blue; border:5px solid white;"); // делаем её зеленой
+			label->setStyleSheet("background-color:"+ QColor::fromRgb(set.value("tilesColor-red").toInt(),
+			                                                          set.value("tilesColor-green").toInt(),
+			                                                          set.value("tilesColor-blue").toInt(),255).name() +"; border:2px solid white; border-radius: 10px;"); // делаем её зеленой
 
 			connect(label, SIGNAL(pressed()), this, SLOT(processButton()));
 
@@ -223,10 +244,34 @@ void MainWindow::processButton() // по нажатию плитки выпол�
 					{
 						timer_started = false;
 						can_move = false;
+
+						QString best_score;
+						QSettings set("Neridia, Inc.", "Fifteen"); // открываем настройки
+
 						QMessageBox msg;
 						msg.setText("Вы выиграли!"); // выводим сообщение о выигрыше
 						msg.setStandardButtons(QMessageBox::Ok);
-						msg.setInformativeText("Число ходов: " + QString::number(moves_number) + all_time);
+
+						//TODO: дописать лучший рекорд
+						if (set.contains("best_score"))
+						{
+							qDebug() << "Best_score: " << set.value("best_score").toInt() << " moves_number: " << moves_number;
+							if (set.value("best_score").toInt() > moves_number)
+							{
+								msg.setInformativeText("Вы установили новый рекорд! Ваше число ходов: " + QString::number(moves_number) + "\n");
+								msg.setInformativeText(msg.informativeText() + "Предыдущий рекорд: " + set.value("best_score").toString());
+								set.setValue("best_score", moves_number);
+							}
+							else
+							{
+								msg.setInformativeText("Число ходов: " + QString::number(moves_number));
+							}
+						}
+						else
+						{
+							msg.setInformativeText("Число ходов: " + QString::number(moves_number));
+							set.setValue("best_score", moves_number);
+						}
 						msg.exec();
 					}
 					return;
@@ -246,10 +291,6 @@ void MainWindow::on_pushButton_clicked()
 	moves_info->setText("Число ходов: 0");
 	moves_number = 0;
 	Generate_Tiles(true);
-	startTimer(0);
-	mStartTime = QDateTime::currentDateTime();
-	timer_started = true;
-	can_move = true;
 }
 
 void MainWindow::timerEvent(QTimerEvent *)
@@ -282,6 +323,13 @@ void MainWindow::timerEvent(QTimerEvent *)
 
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
-	QMainWindow::resizeEvent(event);
+	QMainWindow::resizeEvent(event); //for debugging
 	qDebug() << this->width() << " " << this->height();
+}
+
+void MainWindow::on_pushButton_settings_clicked()
+{
+	settings *scr = new settings(this); // open settings window
+	connect(scr,SIGNAL(apply_settings()),this,SLOT(Generate_Tiles()));
+	scr->show();
 }
