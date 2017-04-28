@@ -106,7 +106,7 @@ void MainWindow::Generate_Tiles(bool random) // функция для рандо
 			label->setMinimumSize(80,80);
 			label->setStyleSheet("background-color:"+ QColor::fromRgb(set.value("tilesColor-red").toInt(),
 			                                                          set.value("tilesColor-green").toInt(),
-			                                                          set.value("tilesColor-blue").toInt(),255).name() +"; border:2px solid white; border-radius: 10px;"); // делаем её зеленой
+			                                                          set.value("tilesColor-blue").toInt(),255).name() +"; border:2px solid white; border-radius: " +set.value("border-radius").toString() + "px;"); // делаем её зеленой
 
 			connect(label, SIGNAL(pressed()), this, SLOT(processButton()));
 

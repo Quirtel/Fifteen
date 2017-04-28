@@ -21,12 +21,15 @@ private slots:
 
 	void on_pushButton_font_clicked();
 
+	void on_checkBox_border_clicked();
+
 signals:
 	void apply_settings();
 
 private:
 	Ui::settings *ui;
 	std::fstream file;
+	QPalette pal;
 };
 
 #endif // SETTINGS_H
