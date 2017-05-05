@@ -6,7 +6,7 @@
 #include <QFontDialog>
 #include <QColorDialog>
 #include <QColor>
-#include "mainwindow.h"
+#include "fifteen.h"
 
 settings::settings(QWidget *parent) :
     QMainWindow(parent),

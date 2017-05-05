@@ -24,14 +24,16 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
     scores.cpp \
-    settings.cpp
+    settings.cpp \
+    fifteen.cpp
 
-HEADERS  += mainwindow.h \
+HEADERS  += \
     scores.h \
-    settings.h
+    settings.h \
+    fifteen.h
 
-FORMS    += mainwindow.ui \
+FORMS    += \
     scores.ui \
-    settings.ui
+    settings.ui \
+    fifteen.ui

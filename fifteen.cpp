@@ -1,5 +1,5 @@
-#include "mainwindow.h"
-#include "ui_mainwindow.h"
+#include "fifteen.h"
+#include "ui_fifteen.h"
 #include <QtCore>
 #include <QLabel>
 #include <QtGui>
@@ -18,14 +18,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	arr = NULL;
 	moves_number = 0;
-	moves_info = new QLabel(ui->statusBar);
-	time_label = new QLabel(ui->statusBar);
 
-	moves_info->setText("Число ходов: 0");
-	ui->statusBar->insertWidget(0,moves_info,50);
-	ui->statusBar->insertWidget(1,time_label);
 
 	Generate_Tiles(false);
+	this->setFocus();
 }
 
 void MainWindow::Generate_Tiles(bool random) // функция для рандомного создания плиток
@@ -35,8 +31,10 @@ void MainWindow::Generate_Tiles(bool random) // функция для рандо
 	if (!random)
 	{
 		timer_started = false;
-		time_label->setText("Время: 00:00");
-		moves_info->setText("Число ходов: 0");
+		can_move = false;
+		ui->label_Time->setText("Время: 00:00");
+		ui->label_Moves->setText("Ходов: 0");
+		ui->pushButton->setText("Начать игру");
 	}
 	else
 	{
@@ -239,7 +237,7 @@ void MainWindow::processButton() // по нажатию плитки выпол�
 				if (arr[i][j] == obj) // нашлась плитка
 				{
 					MoveCell(obj,i,j); // двигаем плитки
-					moves_info->setText("Число ходов: " + QString::number(moves_number));
+					ui->label_Moves->setText("Ходов: " + QString::number(moves_number));
 					if(has_won()) // если плитки расставлены по порядку
 					{
 						timer_started = false;
@@ -252,7 +250,6 @@ void MainWindow::processButton() // по нажатию плитки выпол�
 						msg.setText("Вы выиграли!"); // выводим сообщение о выигрыше
 						msg.setStandardButtons(QMessageBox::Ok);
 
-						//TODO: дописать лучший рекорд
 						if (set.contains("best_score"))
 						{
 							qDebug() << "Best_score: " << set.value("best_score").toInt() << " moves_number: " << moves_number;
@@ -288,9 +285,10 @@ int my_rand(int i)
 
 void MainWindow::on_pushButton_clicked()
 {
-	moves_info->setText("Число ходов: 0");
+	ui->label_Moves->setText("Ходов: 0");
 	moves_number = 0;
 	Generate_Tiles(true);
+	ui->pushButton->setText("Перезапустить");
 }
 
 void MainWindow::timerEvent(QTimerEvent *)
@@ -317,7 +315,7 @@ void MainWindow::timerEvent(QTimerEvent *)
 			all_time += QString::number(s);
 		}
 
-		time_label->setText("Время: " + all_time);
+		ui->label_Time->setText("Время: " + all_time);
 	}
 }
 
